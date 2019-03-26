@@ -6,6 +6,7 @@
 
 + (id)sharedCalloutBar;
 - (void)update;
+- (void)resetPage;
 
 @end
 

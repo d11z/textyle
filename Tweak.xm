@@ -84,6 +84,7 @@ static BOOL menuOpen = NO;
     menuOpen = YES;
 
     UICalloutBar *calloutBar = [UICalloutBar sharedCalloutBar];
+    [calloutBar resetPage];
     [calloutBar update];
 }
 
