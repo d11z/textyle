@@ -1,8 +1,8 @@
 @interface UICalloutBar : UIView
 
 @property (nonatomic, retain) NSArray *extraItems;
-@property (nonatomic, retain) UIMenuItem *txtStyleMenuItem;
-@property (nonatomic, retain) NSArray *txtStyles;
+@property (nonatomic, retain) UIMenuItem *txtMainMenuItem;
+@property (nonatomic, retain) NSArray *txtStyleMenuItems;
 
 + (id)sharedCalloutBar;
 - (void)update;

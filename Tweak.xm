@@ -7,18 +7,18 @@ static BOOL menuOpen = NO;
 
 %hook UICalloutBar
 
-%property (nonatomic, retain) UIMenuItem *txtStyleMenuItem;
-%property (nonatomic, retain) NSArray *txtStyles;
+%property (nonatomic, retain) UIMenuItem *txtMainMenuItem;
+%property (nonatomic, retain) NSArray *txtStyleMenuItems;
 
 - (id)initWithFrame:(CGRect)arg1 {
     self = %orig;
 
-    if (!self.txtStyleMenuItem) {
-        self.txtStyleMenuItem = [[UIMenuItem alloc] initWithTitle:@"Styles" action:@selector(txtOpenStyleMenu:)];
-        self.txtStyleMenuItem.dontDismiss = YES;
+    if (!self.txtMainMenuItem) {
+        self.txtMainMenuItem = [[UIMenuItem alloc] initWithTitle:@"Styles" action:@selector(txtOpenStyleMenu:)];
+        self.txtMainMenuItem.dontDismiss = YES;
     }
 
-    if (!self.txtStyles) {
+    if (!self.txtStyleMenuItems) {
         NSMutableArray *items = [NSMutableArray array];
 
         for (NSDictionary *style in styles) {
@@ -26,7 +26,7 @@ static BOOL menuOpen = NO;
             [items addObject:item];
         }
 
-        self.txtStyles = items;
+        self.txtStyleMenuItems = items;
     }
 
     return self;
@@ -50,22 +50,22 @@ static BOOL menuOpen = NO;
     NSMutableArray *items = [self.extraItems mutableCopy];
 
     if (isSelected) {
-        if (![items containsObject:self.txtStyleMenuItem]) {
-            [items addObject:self.txtStyleMenuItem];
+        if (![items containsObject:self.txtMainMenuItem]) {
+            [items addObject:self.txtMainMenuItem];
         }
     } else {
-        [items removeObject:self.txtStyleMenuItem];
+        [items removeObject:self.txtMainMenuItem];
     }
 
     if (menuOpen) {
         items = [NSMutableArray array];
-        for (UIMenuItem *item in self.txtStyles) {
+        for (UIMenuItem *item in self.txtStyleMenuItems) {
             if (![items containsObject:item]) {
                 [items addObject:item];
             }
         }
     } else {
-        for (UIMenuItem *item in self.txtStyles) {
+        for (UIMenuItem *item in self.txtStyleMenuItems) {
             [items removeObject:item];
         }
     }
