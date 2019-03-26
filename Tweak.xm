@@ -1,5 +1,6 @@
 #import "Tweak.h"
 
+static NSArray *styles;
 static BOOL menuOpen = NO;
 
 %group Textyle
@@ -18,11 +19,10 @@ static BOOL menuOpen = NO;
     }
 
     if (!self.txtStyles) {
-        NSArray *styles = @[@"Bold", @"Italic", @"Gothic"];
         NSMutableArray *items = [NSMutableArray array];
 
-        for (NSString *style in styles) {
-            UIMenuItem *item = [[UIMenuItem alloc] initWithTitle:style action:@selector(txtApplyStyle:)];
+        for (NSDictionary *style in styles) {
+            UIMenuItem *item = [[UIMenuItem alloc] initWithTitle:style[@"label"] action:@selector(txtApplyStyle:)];
             [items addObject:item];
         }
 
@@ -154,6 +154,9 @@ static BOOL menuOpen = NO;
     }
 
     if (!shouldLoad) return;
+
+    NSString *filePath = [[NSBundle bundleWithPath:@"/Library/Application Support/Textyle"] pathForResource:@"styles" ofType:@"plist"];
+    styles = [[NSArray alloc] initWithContentsOfFile:filePath];
 
     %init(Textyle);
 }
