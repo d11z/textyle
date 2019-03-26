@@ -1,0 +1,9 @@
+Package: com.d11z.textyle
+Name: Textyle
+Depends: mobilesubstrate
+Version: 0.1.0
+Architecture: iphoneos-arm
+Description: Quickly style any text
+Maintainer: Deniz Basegmez
+Author: Deniz Basegmez
+Section: Tweaks
