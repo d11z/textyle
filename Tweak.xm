@@ -105,6 +105,15 @@ static BOOL menuOpen = NO;
 
 %hook UIResponder
 
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    NSString *sel = NSStringFromSelector(action);
+    NSRange match = [sel rangeOfString:@"txt_"];
+
+    if (match.location == 0) return menuOpen;
+    if (menuOpen) return NO;
+    return %orig;
+}
+
 %new
 - (void)txtOpenStyleMenu:(UIResponder *)sender {
     menuOpen = YES;
@@ -148,16 +157,29 @@ static BOOL menuOpen = NO;
 
 %end
 
-%hook UITextView
+%hook UITextField
 
-- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
-    NSString *sel = NSStringFromSelector(action);
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)sel {
+    if (%orig(sel)) {
+        return %orig(sel);
+    }
+    return %orig(@selector(txtDidSelectStyle:));
+}
+
+- (void)forwardInvocation:(NSInvocation *)invocation {
+    NSString *sel = NSStringFromSelector([invocation selector]);
     NSRange match = [sel rangeOfString:@"txt_"];
 
-    if (match.location == 0) return menuOpen;
-    if (menuOpen) return NO;
-    return %orig;
+    if (match.location == 0) {
+        [self txtDidSelectStyle:[sel substringFromIndex:4]];
+    } else {
+        %orig(invocation);
+    }
 }
+
+%end
+
+%hook UITextView
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)sel {
     if (%orig(sel)) {
