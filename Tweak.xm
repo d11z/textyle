@@ -1,5 +1,25 @@
 #import "Tweak.h"
 
+static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
+    NSMutableString *stylized = [NSMutableString string];
+    NSUInteger length = text.length;
+    unichar buffer[length+1];
+
+    [text getCharacters:buffer range:NSMakeRange(0, length)];
+
+    for (int i = 0; i < length; i++) {
+        NSString *key = [NSString stringWithFormat:@"%C", buffer[i]];
+
+        if ([map objectForKey:key]) {
+            [stylized appendString:map[key]];
+        } else {
+            [stylized appendString:key];
+        }
+    }
+
+    return stylized;
+}
+
 static NSArray *styles;
 static BOOL menuOpen = NO;
 
@@ -22,7 +42,9 @@ static BOOL menuOpen = NO;
         NSMutableArray *items = [NSMutableArray array];
 
         for (NSDictionary *style in styles) {
-            UIMenuItem *item = [[UIMenuItem alloc] initWithTitle:style[@"label"] action:@selector(txtApplyStyle:)];
+            NSString *action = [NSString stringWithFormat:@"txt_%@", style[@"name"]];
+            UIMenuItem *item = [[UIMenuItem alloc] initWithTitle:style[@"label"] action:NSSelectorFromString(action)];
+
             [items addObject:item];
         }
 
@@ -40,7 +62,7 @@ static BOOL menuOpen = NO;
     }
 
     BOOL isSelected = NO;
-    NSArray *currentSystemButtons = MSHookIvar<NSArray *>(self, "m_currentSystemButtons");
+    NSMutableArray *currentSystemButtons = MSHookIvar<NSMutableArray *>(self, "m_currentSystemButtons");
     for (UICalloutBarButton *btn in currentSystemButtons) {
         if (btn.action == @selector(cut:)) {
             isSelected = YES;
@@ -73,6 +95,10 @@ static BOOL menuOpen = NO;
     self.extraItems = items;
 
     %orig;
+
+    if (menuOpen) {
+        [currentSystemButtons removeAllObjects];
+    }
 }
 
 %end
@@ -93,20 +119,31 @@ static BOOL menuOpen = NO;
     menuOpen = NO;
 }
 
-%new
-- (void)txtApplyStyle:(id)sender {
-    menuOpen = NO;
-}
-
-- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
-    if (action == @selector(txtApplyStyle:)) return menuOpen;
-    if (menuOpen) return NO;
-    return %orig;
-}
-
 - (BOOL)becomeFirstResponder {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(txtCloseStyleMenu) name:UIMenuControllerDidHideMenuNotification object:nil];
     return %orig;
+}
+
+%new
+- (void)txtReplaceSelectedText:(NSDictionary *)map {
+    NSRange selectedRange = [self _selectedNSRange];
+    NSString *original = [self _fullText];
+    NSString *selectedText = [original substringWithRange:selectedRange];
+    NSString *stylized = stylizeTextWithMap(selectedText, map);
+
+    UITextRange *textRange = [self _textRangeFromNSRange:selectedRange];
+    [self replaceRange:textRange withText:stylized];
+}
+
+%new
+- (void)txtDidSelectStyle:(NSString *)name {
+    menuOpen = NO;
+
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"(name == %@)", name];
+    NSArray *arr = [styles filteredArrayUsingPredicate:predicate];
+    NSDictionary *style = [arr objectAtIndex:0];
+
+    [self txtReplaceSelectedText:style[@"map"]];
 }
 
 %end
@@ -114,17 +151,30 @@ static BOOL menuOpen = NO;
 %hook UITextView
 
 - (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    NSString *sel = NSStringFromSelector(action);
+    NSRange match = [sel rangeOfString:@"txt_"];
+
+    if (match.location == 0) return menuOpen;
     if (menuOpen) return NO;
     return %orig;
 }
 
-%end
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)sel {
+    if (%orig(sel)) {
+        return %orig(sel);
+    }
+    return %orig(@selector(txtDidSelectStyle:));
+}
 
-%hook CKMessageEntryRichTextView
+- (void)forwardInvocation:(NSInvocation *)invocation {
+    NSString *sel = NSStringFromSelector([invocation selector]);
+    NSRange match = [sel rangeOfString:@"txt_"];
 
-- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
-    if (menuOpen) return NO;
-    return %orig;
+    if (match.location == 0) {
+        [self txtDidSelectStyle:[sel substringFromIndex:4]];
+    } else {
+        %orig(invocation);
+    }
 }
 
 %end

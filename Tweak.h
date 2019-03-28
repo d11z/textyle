@@ -23,3 +23,16 @@
 @property (assign, nonatomic) BOOL dontDismiss;
 
 @end
+
+
+@interface UIResponder (Textyle)
+
+- (NSRange)_selectedNSRange;
+- (id)_fullText;
+- (void)replaceRange:(id)arg1 withText:(id)arg2;
+- (id)_textRangeFromNSRange:(NSRange)arg1;
+
+- (void)txtDidSelectStyle:(NSString *)name;
+- (void)txtReplaceSelectedText:(NSDictionary *)map;
+
+@end
