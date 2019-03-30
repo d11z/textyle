@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>headerCellClass</key>
+			<string>HBImageTableCell</string>
+			<key>height</key>
+			<integer>100</integer>
+			<key>icon</key>
+			<string>banner.png</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.d11z.textyle</string>
+			<key>key</key>
+			<string>Enabled</string>
+			<key>label</key>
+			<string>Enabled</string>
+			<key>PostNotification</key>
+			<string>com.d11z.textyle/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Settings</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Edit Styles</string>
+			<key>action</key>
+			<string>showStylesController</string>
+			<key>icon</key>
+			<string>styles.png</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>bundle</key>
+			<string>AppList</string>
+			<key>isController</key>
+			<true/>
+			<key>label</key>
+			<string>Blacklisted Apps</string>
+			<key>icon</key>
+			<string>blacklist.png</string>
+			<key>ALSettingsKeyPrefix</key>
+			<string>disableTextyle-</string>
+			<key>ALSettingsPath</key>
+			<string>/var/mobile/Library/Preferences/com.d11z.textyle.blacklist.plist</string>
+			<key>ALSingleEnabledMode</key>
+			<false/>
+			<key>ALSectionDescriptors</key>
+			<array>
+				<dict>
+					<key>cell-class-name</key>
+					<string>ALSwitchCell</string>
+					<key>predicate</key>
+					<string>isSystemApplication = TRUE</string>
+					<key>icon-size</key>
+					<string>29</string>
+					<key>suppress-hidden-apps</key>
+					<true/>
+					<key>title</key>
+					<string>System Applications</string>
+				</dict>
+				<dict>
+					<key>cell-class-name</key>
+					<string>ALSwitchCell</string>
+					<key>predicate</key>
+					<string>isSystemApplication = FALSE</string>
+					<key>icon-size</key>
+					<string>29</string>
+					<key>suppress-hidden-apps</key>
+					<true/>
+					<key>title</key>
+					<string>User Applications</string>
+				</dict>
+			</array>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Support</string>
+			<key>footerText</key>
+			<string>Deniz Basegmez © 2019</string>
+			<key>footerAlignment</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>HBTwitterCell</string>
+			<key>label</key>
+			<string>Deniz Basegmez</string>
+			<key>user</key>
+			<string>d3zb6z</string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>HBLinkTableCell</string>
+			<key>label</key>
+			<string>Donate via PayPal</string>
+			<key>url</key>
+			<string>https://paypal.me/d3zb6z</string>
+			<key>icon</key>
+			<string>paypal.png</string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>HBLinkTableCell</string>
+			<key>label</key>
+			<string>Donate via Bitcoin</string>
+			<key>url</key>
+			<string>https://www.blockchain.com/btc/address/1MqH7we74SzHt7KroeXcsz4FVRd3oK4Nj9</string>
+			<key>icon</key>
+			<string>bitcoin.png</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Textyle</string>
+</dict>
+</plist>

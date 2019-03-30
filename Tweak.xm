@@ -1,4 +1,10 @@
 #import "Tweak.h"
+#import <Cephei/HBPreferences.h>
+
+static BOOL enabled;
+static NSArray *styles;
+static NSArray *enabledStyles;
+static BOOL menuOpen = NO;
 
 static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
     NSMutableString *stylized = [NSMutableString string];
@@ -20,9 +26,6 @@ static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
     return stylized;
 }
 
-static NSArray *styles;
-static BOOL menuOpen = NO;
-
 %group Textyle
 
 %hook UICalloutBar
@@ -32,6 +35,8 @@ static BOOL menuOpen = NO;
 
 - (id)initWithFrame:(CGRect)arg1 {
     self = %orig;
+
+    if (!enabled) return self;
 
     if (!self.txtMainMenuItem) {
         self.txtMainMenuItem = [[UIMenuItem alloc] initWithTitle:@"Styles" action:@selector(txtOpenStyleMenu:)];
@@ -56,6 +61,8 @@ static BOOL menuOpen = NO;
 
 - (void)updateAvailableButtons {
     %orig;
+
+    if (!enabled) return;
 
     if (!self.extraItems) {
         self.extraItems = @[];
@@ -97,6 +104,9 @@ static BOOL menuOpen = NO;
     %orig;
 
     if (menuOpen) {
+        for (UICalloutBarButton *btn in currentSystemButtons) {
+            [btn removeFromSuperview];
+        }
         [currentSystemButtons removeAllObjects];
     }
 }
@@ -109,8 +119,13 @@ static BOOL menuOpen = NO;
     NSString *sel = NSStringFromSelector(action);
     NSRange match = [sel rangeOfString:@"txt_"];
 
-    if (match.location == 0) return menuOpen;
+    if (match.location == 0) {
+        NSString *name = [sel substringFromIndex:4];
+        return menuOpen && [enabledStyles containsObject:name];
+    }
+
     if (menuOpen) return NO;
+
     return %orig;
 }
 
@@ -226,10 +241,35 @@ static BOOL menuOpen = NO;
         }
     }
 
+    NSString *identifier = [NSBundle mainBundle].bundleIdentifier;
+    HBPreferences *blacklist = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle.blacklist"];
+
+    if ([blacklist boolForKey:[NSString stringWithFormat:@"disableTextyle-%@", identifier] default:NO]) {
+        shouldLoad = NO;
+    }
+
     if (!shouldLoad) return;
 
     NSString *filePath = [[NSBundle bundleWithPath:@"/Library/Application Support/Textyle"] pathForResource:@"styles" ofType:@"plist"];
     styles = [[NSArray alloc] initWithContentsOfFile:filePath];
+
+    HBPreferences *preferences = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle"];
+    [preferences registerDefaults:@{
+        @"Enabled": @YES
+    }];
+
+    [preferences registerBool:&enabled default:YES forKey:@"Enabled"];
+
+    HBPreferences *stylePreferences = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle.styles"];
+    [stylePreferences registerPreferenceChangeBlock:^{
+        NSMutableArray *_enabledStyles = [NSMutableArray array];
+        for (NSDictionary *style in styles) {
+            if ([stylePreferences boolForKey:style[@"name"] default:YES]) {
+                [_enabledStyles addObject:style[@"name"]];
+                enabledStyles = [_enabledStyles copy];
+            }
+        }
+    }];
 
     %init(Textyle);
 }
