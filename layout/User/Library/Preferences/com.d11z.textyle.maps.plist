@@ -1372,63 +1372,63 @@
 
 	<dict>
 		<key>name</key>
-		<string>small</string>
+		<string>smallCaps</string>
 		<key>label</key>
-		<string>sᴍᴀʟʟ</string>
+		<string>Sᴍᴀʟʟ Cᴀᴘs</string>
 		<key>map</key>
 		<dict>
 			<key>A</key>
-			<string>ᴀ</string>
+			<string>A</string>
 			<key>B</key>
-			<string>ʙ</string>
+			<string>B</string>
 			<key>C</key>
-			<string>ᴄ</string>
+			<string>C</string>
 			<key>D</key>
-			<string>ᴅ</string>
+			<string>D</string>
 			<key>E</key>
-			<string>ᴇ</string>
+			<string>E</string>
 			<key>F</key>
-			<string>ғ</string>
+			<string>F</string>
 			<key>G</key>
-			<string>ɢ</string>
+			<string>G</string>
 			<key>H</key>
-			<string>ʜ</string>
+			<string>H</string>
 			<key>I</key>
-			<string>ɪ</string>
+			<string>I</string>
 			<key>J</key>
-			<string>ᴊ</string>
+			<string>J</string>
 			<key>K</key>
-			<string>ᴋ</string>
+			<string>K</string>
 			<key>L</key>
-			<string>ʟ</string>
+			<string>L</string>
 			<key>M</key>
-			<string>ᴍ</string>
+			<string>M</string>
 			<key>N</key>
-			<string>ɴ</string>
+			<string>N</string>
 			<key>O</key>
-			<string>ᴏ</string>
+			<string>O</string>
 			<key>P</key>
-			<string>ᴘ</string>
+			<string>P</string>
 			<key>Q</key>
-			<string>ǫ</string>
+			<string>Q</string>
 			<key>R</key>
-			<string>ʀ</string>
+			<string>R</string>
 			<key>S</key>
-			<string>s</string>
+			<string>S</string>
 			<key>T</key>
-			<string>ᴛ</string>
+			<string>T</string>
 			<key>U</key>
-			<string>ᴜ</string>
+			<string>U</string>
 			<key>V</key>
-			<string>ᴠ</string>
+			<string>V</string>
 			<key>W</key>
-			<string>ᴡ</string>
+			<string>W</string>
 			<key>X</key>
-			<string>x</string>
+			<string>X</string>
 			<key>Y</key>
-			<string>ʏ</string>
+			<string>Y</string>
 			<key>Z</key>
-			<string>ᴢ</string>
+			<string>Z</string>
 			<key>a</key>
 			<string>ᴀ</string>
 			<key>b</key>
