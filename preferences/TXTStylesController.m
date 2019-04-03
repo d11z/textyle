@@ -16,7 +16,7 @@
         NSMutableArray *specifiers = [NSMutableArray array];
 
         PSSpecifier *group = [PSSpecifier groupSpecifierWithName:@"Installed Styles"];
-        [group setProperty:@"To add/modify/rearrange styles, edit the styles.plist file stored in /Library/Application Support/Textyle" forKey:@"footerText"];
+        [group setProperty:@"To add/modify styles, edit /User/Library/Preferences/com.d11z.textyle.maps.plist" forKey:@"footerText"];
 
         [specifiers addObject:group];
 
