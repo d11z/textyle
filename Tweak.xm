@@ -291,8 +291,7 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 
     if (!shouldLoad) return;
 
-    NSString *filePath = [[NSBundle bundleWithPath:@"/Library/Application Support/Textyle"] pathForResource:@"styles" ofType:@"plist"];
-    styles = [[NSArray alloc] initWithContentsOfFile:filePath];
+    styles = [[NSArray alloc] initWithContentsOfFile:@"/User/Library/Preferences/com.d11z.textyle.maps.plist"];
 
     HBPreferences *preferences = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle"];
     [preferences registerDefaults:@{

@@ -5,8 +5,10 @@
 }
 
 - (void)viewDidLoad {
-   [super viewDidLoad];
-   self.title = @"Edit Styles";
+    [super viewDidLoad];
+
+    self.title = @"Edit Styles";
+    self.navigationItem.rightBarButtonItem = self.editButtonItem;
 }
 
 - (NSArray *)specifiers {
@@ -44,8 +46,33 @@
 }
 
 - (void)loadStyles {
-    NSString *filePath = [[NSBundle bundleWithPath:@"/Library/Application Support/Textyle"] pathForResource:@"styles" ofType:@"plist"];
-    styles = [[NSArray alloc] initWithContentsOfFile:filePath];
+    styles = [[NSArray alloc] initWithContentsOfFile:@"/User/Library/Preferences/com.d11z.textyle.maps.plist"];
+}
+
+- (void)setEditing:(BOOL)editing animated:(BOOL)animated {
+    [super setEditing:editing animated:animated];
+    [self.table setEditing:editing animated:animated];
+}
+
+- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return UITableViewCellEditingStyleNone; 
+}
+
+- (BOOL)tableView:(UITableView *)tableview shouldIndentWhileEditingRowAtIndexPath:(NSIndexPath *)indexPath {
+    return NO;
+}
+
+- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
+    return YES;
+}
+
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
+    NSDictionary *item = [styles objectAtIndex:sourceIndexPath.row];
+    NSMutableArray *stylesEdited = [styles mutableCopy];
+    [stylesEdited removeObjectAtIndex:sourceIndexPath.row];
+    [stylesEdited insertObject:item atIndex:destinationIndexPath.row];
+
+    [stylesEdited writeToFile:@"/User/Library/Preferences/com.d11z.textyle.maps.plist" atomically:YES];
 }
 
 @end
