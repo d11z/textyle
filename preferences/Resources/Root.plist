@@ -107,26 +107,6 @@
 			<key>user</key>
 			<string>d3zb6z</string>
 		</dict>
-		<dict>
-			<key>cellClass</key>
-			<string>HBLinkTableCell</string>
-			<key>label</key>
-			<string>Donate via PayPal</string>
-			<key>url</key>
-			<string>https://paypal.me/d3zb6z</string>
-			<key>icon</key>
-			<string>paypal.png</string>
-		</dict>
-		<dict>
-			<key>cellClass</key>
-			<string>HBLinkTableCell</string>
-			<key>label</key>
-			<string>Donate via Bitcoin</string>
-			<key>url</key>
-			<string>https://www.blockchain.com/btc/address/1MqH7we74SzHt7KroeXcsz4FVRd3oK4Nj9</string>
-			<key>icon</key>
-			<string>bitcoin.png</string>
-		</dict>
 	</array>
 	<key>title</key>
 	<string>Textyle</string>
