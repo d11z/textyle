@@ -26,6 +26,44 @@ static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
     return stylized;
 }
 
+static NSString *stylizeTextSpongebob(NSString *text) {
+    NSCharacterSet *letters = [NSCharacterSet letterCharacterSet];
+    NSMutableString *stylized = [NSMutableString string];
+    NSUInteger length = text.length;
+    unichar buffer[length+1];
+
+    [text getCharacters:buffer range:NSMakeRange(0, length)];
+
+    int j = 0;
+    for (int i = 0; i < length; i++) {
+        NSString *s = [NSString stringWithFormat:@"%C", buffer[i]];
+
+        if ([letters characterIsMember:buffer[i]]) {
+            [stylized appendString:(j++ % 2) ? [s localizedUppercaseString] : [s localizedLowercaseString]];
+        } else {
+            [stylized appendString:s];
+        }
+    }
+
+    return stylized;
+}
+
+static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combiningChar) {
+    NSMutableString *stylized = [NSMutableString string];
+    NSUInteger length = text.length;
+    unichar buffer[length+1];
+
+    [text getCharacters:buffer range:NSMakeRange(0, length)];
+
+    for (int i = 0; i < length; i++) {
+        NSString *s = [NSString stringWithFormat:@"%C", buffer[i]];
+        [stylized appendString:s];
+        [stylized appendString:combiningChar];
+    }
+
+    return stylized;
+}
+
 %group Textyle
 
 %hook UICalloutBar
@@ -149,17 +187,6 @@ static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
 }
 
 %new
-- (void)txtReplaceSelectedText:(NSDictionary *)map {
-    NSRange selectedRange = [self _selectedNSRange];
-    NSString *original = [self _fullText];
-    NSString *selectedText = [original substringWithRange:selectedRange];
-    NSString *stylized = stylizeTextWithMap(selectedText, map);
-
-    UITextRange *textRange = [self _textRangeFromNSRange:selectedRange];
-    [self replaceRange:textRange withText:stylized];
-}
-
-%new
 - (void)txtDidSelectStyle:(NSString *)name {
     menuOpen = NO;
 
@@ -167,7 +194,21 @@ static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
     NSArray *arr = [styles filteredArrayUsingPredicate:predicate];
     NSDictionary *style = [arr objectAtIndex:0];
 
-    [self txtReplaceSelectedText:style[@"map"]];
+    NSRange selectedRange = [self _selectedNSRange];
+    NSString *original = [self _fullText];
+    NSString *selectedText = [original substringWithRange:selectedRange];
+
+    NSString *stylized;
+    if (style[@"map"]) {
+        stylized = stylizeTextWithMap(selectedText, style[@"map"]);
+    } else if (style[@"combine"]) {
+        stylized = stylizeTextWithCombiningChar(selectedText, style[@"combine"]);
+    } else if ([style[@"function"] isEqualToString:@"spongebob"]) {
+        stylized = stylizeTextSpongebob(selectedText);
+    }
+
+    UITextRange *textRange = [self _textRangeFromNSRange:selectedRange];
+    [self replaceRange:textRange withText:stylized]; 
 }
 
 %end
