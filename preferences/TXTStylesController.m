@@ -1,5 +1,7 @@
 #import "TXTStylesController.h"
 
+#define kUserStylesPath @"/var/mobile/Library/Preferences/com.d11z.textyle.maps.plist"
+
 @implementation TXTStylesController {
     NSArray *styles;
 }
@@ -9,6 +11,8 @@
 
     self.title = @"Edit Styles";
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
+
+    [self loadStyles];
 }
 
 - (NSArray *)specifiers {
@@ -16,7 +20,7 @@
         NSMutableArray *specifiers = [NSMutableArray array];
 
         PSSpecifier *group = [PSSpecifier groupSpecifierWithName:@"Installed Styles"];
-        [group setProperty:@"To add/modify styles, edit /User/Library/Preferences/com.d11z.textyle.maps.plist" forKey:@"footerText"];
+        [group setProperty:@"To add/modify styles, edit /var/mobile/Library/Preferences/com.d11z.textyle.maps.plist" forKey:@"footerText"];
 
         [specifiers addObject:group];
 
@@ -46,7 +50,14 @@
 }
 
 - (void)loadStyles {
-    styles = [[NSArray alloc] initWithContentsOfFile:@"/User/Library/Preferences/com.d11z.textyle.maps.plist"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    if (![fileManager fileExistsAtPath:kUserStylesPath]) {
+        styles = [[NSArray alloc] initWithContentsOfFile:@"/Library/Application Support/Textyle/styles.plist"];
+        [styles writeToFile:kUserStylesPath atomically:YES];
+    } else {
+        styles = [[NSArray alloc] initWithContentsOfFile:kUserStylesPath];
+    }
 }
 
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated {
@@ -72,7 +83,7 @@
     [stylesEdited removeObjectAtIndex:sourceIndexPath.row];
     [stylesEdited insertObject:item atIndex:destinationIndexPath.row];
 
-    [stylesEdited writeToFile:@"/User/Library/Preferences/com.d11z.textyle.maps.plist" atomically:YES];
+    [stylesEdited writeToFile:kUserStylesPath atomically:YES];
 }
 
 @end

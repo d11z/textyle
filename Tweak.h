@@ -1,3 +1,5 @@
+#define kUserStylesPath @"/var/mobile/Library/Preferences/com.d11z.textyle.maps.plist"
+
 @interface UICalloutBar : UIView
 
 @property (nonatomic, retain) NSArray *extraItems;

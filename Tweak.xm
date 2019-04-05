@@ -259,6 +259,10 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 
 %end
 
+__attribute__((always_inline)) bool check_crack() {
+    return [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.d11z.textyle.list"];
+}
+
 %ctor {
     // Someone smarter than me invented this.
     // https://www.reddit.com/r/jailbreak/comments/4yz5v5/questionremote_messages_not_enabling/d6rlh88/
@@ -290,8 +294,15 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
     }
 
     if (!shouldLoad) return;
+    if (!check_crack()) return;
 
-    styles = [[NSArray alloc] initWithContentsOfFile:@"/User/Library/Preferences/com.d11z.textyle.maps.plist"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    if (![fileManager fileExistsAtPath:kUserStylesPath]) {
+        styles = [[NSArray alloc] initWithContentsOfFile:@"/Library/Application Support/Textyle/styles.plist"];
+    } else {
+        styles = [[NSArray alloc] initWithContentsOfFile:kUserStylesPath];
+    }
 
     HBPreferences *preferences = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle"];
     [preferences registerDefaults:@{

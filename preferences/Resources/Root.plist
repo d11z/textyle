@@ -33,6 +33,10 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>Settings</string>
+			<key>footerText</key>
+			<string>Reordering styles or blacklisting an app requires you to restart your apps or respring to apply changes</string>
+			<key>footerAlignment</key>
+			<integer>1</integer>
 		</dict>
 		<dict>
 			<key>cell</key>

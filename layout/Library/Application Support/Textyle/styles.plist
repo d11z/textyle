@@ -1486,6 +1486,15 @@
 
 	<dict>
 		<key>name</key>
+		<string>spongebob</string>
+		<key>label</key>
+		<string>sPoNgEbOb</string>
+		<key>function</key>
+		<string>spongebob</string>
+	</dict>
+
+	<dict>
+		<key>name</key>
 		<string>clap</string>
 		<key>label</key>
 		<string>👏</string>
@@ -2601,15 +2610,6 @@
 		<string>H⃘O⃘L⃘E⃘S⃘</string>
 		<key>combine</key>
 		<string>⃘</string>
-	</dict>
-
-	<dict>
-		<key>name</key>
-		<string>spongebob</string>
-		<key>label</key>
-		<string>sPoNgEbOb</string>
-		<key>function</key>
-		<string>spongebob</string>
 	</dict>
 </array>
 </plist>
