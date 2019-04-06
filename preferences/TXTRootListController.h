@@ -1,5 +1,5 @@
-#import <CepheiPrefs/HBRootListController.h>
+#import <Preferences/PSListController.h>
 
-@interface TXTRootListController : HBRootListController
+@interface TXTRootListController : PSListController
 
 @end

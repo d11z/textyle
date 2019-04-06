@@ -1,6 +1,6 @@
 #import <Preferences/PSSpecifier.h>
-#import <CepheiPrefs/HBListController.h>
+#import <Preferences/PSListController.h>
 
-@interface TXTStylesController : HBListController
+@interface TXTStylesController : PSListController
 
 @end

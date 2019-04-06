@@ -1,9 +1,9 @@
 #import "Tweak.h"
-#import <Cephei/HBPreferences.h>
 
 static BOOL enabled;
 static NSArray *styles;
 static NSArray *enabledStyles;
+static NSDictionary *blacklist;
 static BOOL menuOpen = NO;
 
 static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
@@ -74,8 +74,6 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 - (id)initWithFrame:(CGRect)arg1 {
     self = %orig;
 
-    if (!enabled) return self;
-
     if (!self.txtMainMenuItem) {
         self.txtMainMenuItem = [[UIMenuItem alloc] initWithTitle:@"Styles" action:@selector(txtOpenStyleMenu:)];
         self.txtMainMenuItem.dontDismiss = YES;
@@ -100,8 +98,6 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 - (void)updateAvailableButtons {
     %orig;
 
-    if (!enabled) return;
-
     if (!self.extraItems) {
         self.extraItems = @[];
     }
@@ -116,7 +112,7 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 
     NSMutableArray *items = [self.extraItems mutableCopy];
 
-    if (isSelected) {
+    if (isSelected && enabled) {
         if (![items containsObject:self.txtMainMenuItem]) {
             [items addObject:self.txtMainMenuItem];
         }
@@ -259,6 +255,63 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 
 %end
 
+static void loadPrefs() {
+    NSString *preferencesPath = @"/User/Library/Preferences/com.d11z.textyle.plist";
+    NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:preferencesPath];
+
+    if (!preferences) {
+        preferences = [[NSMutableDictionary alloc] init];
+        enabled = YES;
+    } else {
+        enabled = [[preferences objectForKey:@"Enabled"] boolValue];
+    }
+}
+
+static void loadBlacklist() {
+    NSString *blacklistPreferencesPath = @"/User/Library/Preferences/com.d11z.textyle.blacklist.plist";
+    blacklist = [[NSMutableDictionary alloc] initWithContentsOfFile:blacklistPreferencesPath];
+
+    if (!blacklist) {
+        blacklist = [[NSMutableDictionary alloc] init];
+    }
+}
+
+static void loadStyles() {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    if (![fileManager fileExistsAtPath:kUserStylesPath]) {
+        styles = [[NSArray alloc] initWithContentsOfFile:@"/Library/Application Support/Textyle/styles.plist"];
+    } else {
+        styles = [[NSArray alloc] initWithContentsOfFile:kUserStylesPath];
+    }
+}
+
+static void loadEnabledStyles() {
+    NSString *stylePreferencesPath = @"/User/Library/Preferences/com.d11z.textyle.styles.plist";
+    NSMutableDictionary *stylePreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:stylePreferencesPath];
+
+    NSMutableArray *_enabledStyles = [NSMutableArray array];
+    for (NSDictionary *style in styles) {
+        if (!stylePreferences) {
+            [_enabledStyles addObject:style[@"name"]];
+        } else {
+            if ([[stylePreferences objectForKey:style[@"name"]] boolValue]) {
+                [_enabledStyles addObject:style[@"name"]];
+            }
+        }
+    }
+
+    enabledStyles = [_enabledStyles copy]; 
+}
+
+static void notificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    loadPrefs();
+}
+
+static void enabledStylesNotificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    loadEnabledStyles();
+}
+
 __attribute__((always_inline)) bool check_crack() {
     return [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.d11z.textyle.list"];
 }
@@ -286,41 +339,38 @@ __attribute__((always_inline)) bool check_crack() {
         }
     }
 
-    NSString *identifier = [NSBundle mainBundle].bundleIdentifier;
-    HBPreferences *blacklist = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle.blacklist"];
+    loadBlacklist();
 
-    if ([blacklist boolForKey:[NSString stringWithFormat:@"disableTextyle-%@", identifier] default:NO]) {
+    NSString *identifier = [NSBundle mainBundle].bundleIdentifier;
+    NSString *blacklistKey = [NSString stringWithFormat:@"disableTextyle-%@", identifier];
+
+    if ([[blacklist objectForKey:blacklistKey] boolValue]) {
         shouldLoad = NO;
     }
 
-    if (!shouldLoad) return;
-    if (!check_crack()) return;
-
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-
-    if (![fileManager fileExistsAtPath:kUserStylesPath]) {
-        styles = [[NSArray alloc] initWithContentsOfFile:@"/Library/Application Support/Textyle/styles.plist"];
-    } else {
-        styles = [[NSArray alloc] initWithContentsOfFile:kUserStylesPath];
+    if (!shouldLoad || !check_crack()) {
+        return;
     }
 
-    HBPreferences *preferences = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle"];
-    [preferences registerDefaults:@{
-        @"Enabled": @YES
-    }];
+    loadStyles();
 
-    [preferences registerBool:&enabled default:YES forKey:@"Enabled"];
+    loadPrefs();
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                    NULL,
+                                    notificationCallback,
+                                    CFSTR("com.d11z.textyle/preferences"),
+                                    NULL,
+                                    CFNotificationSuspensionBehaviorCoalesce
+                                    );
 
-    HBPreferences *stylePreferences = [[HBPreferences alloc] initWithIdentifier:@"com.d11z.textyle.styles"];
-    [stylePreferences registerPreferenceChangeBlock:^{
-        NSMutableArray *_enabledStyles = [NSMutableArray array];
-        for (NSDictionary *style in styles) {
-            if ([stylePreferences boolForKey:style[@"name"] default:YES]) {
-                [_enabledStyles addObject:style[@"name"]];
-                enabledStyles = [_enabledStyles copy];
-            }
-        }
-    }];
+    loadEnabledStyles();
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                    NULL,
+                                    enabledStylesNotificationCallback,
+                                    CFSTR("com.d11z.textyle.styles/enabledStyles"),
+                                    NULL,
+                                    CFNotificationSuspensionBehaviorCoalesce
+                                    );
 
     %init(Textyle);
 }
