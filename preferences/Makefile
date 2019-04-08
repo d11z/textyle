@@ -1,6 +1,3 @@
-ARCHS = armv7 armv7s arm64
-TARGET = iphone:clang:11.2:11.2
-
 include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = Textyle
@@ -8,7 +5,7 @@ $(BUNDLE_NAME)_FILES = $(wildcard *.m)
 $(BUNDLE_NAME)_INSTALL_PATH = /Library/PreferenceBundles
 $(BUNDLE_NAME)_FRAMEWORKS = UIKit
 $(BUNDLE_NAME)_PRIVATE_FRAMEWORKS = Preferences
-$(BUNDLE_NAME)_LIBRARIES = applist
+$(BUNDLE_NAME)_LIBRARIES = sparkapplist
 
 include $(THEOS_MAKE_PATH)/bundle.mk
 

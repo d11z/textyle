@@ -80,6 +80,7 @@
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
     NSDictionary *item = [styles objectAtIndex:sourceIndexPath.row];
     NSMutableArray *stylesEdited = [styles mutableCopy];
+
     [stylesEdited removeObjectAtIndex:sourceIndexPath.row];
     [stylesEdited insertObject:item atIndex:destinationIndexPath.row];
 

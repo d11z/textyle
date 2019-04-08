@@ -1,5 +1,6 @@
 #import "TXTRootListController.h"
 #import "TXTStylesController.h"
+#import "SparkAppListTableViewController.h"
 
 @implementation TXTRootListController
 
@@ -14,6 +15,12 @@
 - (void)showStylesController {
     TXTStylesController *child = [[TXTStylesController alloc] init];
     [self.navigationController pushViewController:child animated:YES];
+}
+
+- (void)showBlacklistController {
+    SparkAppListTableViewController* s = [[SparkAppListTableViewController alloc] initWithIdentifier:@"com.d11z.textyle" andKey:@"Blacklist"];
+    [self.navigationController pushViewController:s animated:YES];
+    self.navigationItem.hidesBackButton = FALSE;
 }
 
 - (id)readPreferenceValue:(PSSpecifier *)specifier {

@@ -1,6 +1,3 @@
-ARCHS = armv7 armv7s arm64
-TARGET = iphone:clang:11.2:10.0
-
 DEBUG = 0
 FINALPACKAGE = 1
 
@@ -11,6 +8,7 @@ include $(THEOS_MAKE_PATH)/aggregate.mk
 
 TWEAK_NAME = Textyle
 $(TWEAK_NAME)_FILES = $(wildcard *.m *.xm)
+$(TWEAK_NAME)_LIBRARIES = sparkapplist
 ADDITIONAL_OBJCFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/tweak.mk

@@ -1,4 +1,5 @@
 #import "Tweak.h"
+#import "SparkAppList.h"
 
 static BOOL enabled;
 static NSArray *styles;
@@ -256,8 +257,7 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 %end
 
 static void loadPrefs() {
-    NSString *preferencesPath = @"/User/Library/Preferences/com.d11z.textyle.plist";
-    NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:preferencesPath];
+    NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefsPath];
 
     if (!preferences) {
         preferences = [[NSMutableDictionary alloc] init];
@@ -267,28 +267,18 @@ static void loadPrefs() {
     }
 }
 
-static void loadBlacklist() {
-    NSString *blacklistPreferencesPath = @"/User/Library/Preferences/com.d11z.textyle.blacklist.plist";
-    blacklist = [[NSMutableDictionary alloc] initWithContentsOfFile:blacklistPreferencesPath];
-
-    if (!blacklist) {
-        blacklist = [[NSMutableDictionary alloc] init];
-    }
-}
-
 static void loadStyles() {
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
     if (![fileManager fileExistsAtPath:kUserStylesPath]) {
-        styles = [[NSArray alloc] initWithContentsOfFile:@"/Library/Application Support/Textyle/styles.plist"];
+        styles = [[NSArray alloc] initWithContentsOfFile:kSystemStylesPath];
     } else {
         styles = [[NSArray alloc] initWithContentsOfFile:kUserStylesPath];
     }
 }
 
 static void loadEnabledStyles() {
-    NSString *stylePreferencesPath = @"/User/Library/Preferences/com.d11z.textyle.styles.plist";
-    NSMutableDictionary *stylePreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:stylePreferencesPath];
+    NSMutableDictionary *stylePreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kEnabledStylesPath];
 
     NSMutableArray *_enabledStyles = [NSMutableArray array];
     for (NSDictionary *style in styles) {
@@ -339,12 +329,8 @@ __attribute__((always_inline)) bool check_crack() {
         }
     }
 
-    loadBlacklist();
-
     NSString *identifier = [NSBundle mainBundle].bundleIdentifier;
-    NSString *blacklistKey = [NSString stringWithFormat:@"disableTextyle-%@", identifier];
-
-    if ([[blacklist objectForKey:blacklistKey] boolValue]) {
+    if ([SparkAppList doesIdentifier:@"com.d11z.textyle" andKey:@"Blacklist" containBundleIdentifier:identifier]) {
         shouldLoad = NO;
     }
 

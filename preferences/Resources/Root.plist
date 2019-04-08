@@ -51,47 +51,12 @@
 		<dict>
 			<key>cell</key>
 			<string>PSLinkCell</string>
-			<key>bundle</key>
-			<string>AppList</string>
-			<key>isController</key>
-			<true/>
 			<key>label</key>
 			<string>Blacklisted Apps</string>
+			<key>action</key>
+			<string>showBlacklistController</string>
 			<key>icon</key>
 			<string>blacklist.png</string>
-			<key>ALSettingsKeyPrefix</key>
-			<string>disableTextyle-</string>
-			<key>ALSettingsPath</key>
-			<string>/var/mobile/Library/Preferences/com.d11z.textyle.blacklist.plist</string>
-			<key>ALSingleEnabledMode</key>
-			<false/>
-			<key>ALSectionDescriptors</key>
-			<array>
-				<dict>
-					<key>cell-class-name</key>
-					<string>ALSwitchCell</string>
-					<key>predicate</key>
-					<string>isSystemApplication = TRUE</string>
-					<key>icon-size</key>
-					<string>29</string>
-					<key>suppress-hidden-apps</key>
-					<true/>
-					<key>title</key>
-					<string>System Applications</string>
-				</dict>
-				<dict>
-					<key>cell-class-name</key>
-					<string>ALSwitchCell</string>
-					<key>predicate</key>
-					<string>isSystemApplication = FALSE</string>
-					<key>icon-size</key>
-					<string>29</string>
-					<key>suppress-hidden-apps</key>
-					<true/>
-					<key>title</key>
-					<string>User Applications</string>
-				</dict>
-			</array>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -104,12 +69,10 @@
 			<integer>1</integer>
 		</dict>
 		<dict>
-			<key>cellClass</key>
-			<string>HBTwitterCell</string>
+			<key>cell</key>
+			<string>PSTableCell</string>
 			<key>label</key>
 			<string>Deniz Basegmez</string>
-			<key>user</key>
-			<string>d3zb6z</string>
 		</dict>
 	</array>
 	<key>title</key>

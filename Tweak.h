@@ -1,4 +1,7 @@
+#define kPrefsPath @"/var/mobile/Library/Preferences/com.d11z.textyle.plist"
+#define kSystemStylesPath @"/Library/Application Support/Textyle/styles.plist"
 #define kUserStylesPath @"/var/mobile/Library/Preferences/com.d11z.textyle.maps.plist"
+#define kEnabledStylesPath @"/var/mobile/Library/Preferences/com.d11z.textyle.styles.plist"
 
 @interface UICalloutBar : UIView
 
