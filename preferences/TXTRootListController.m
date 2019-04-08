@@ -46,4 +46,9 @@
     [super setPreferenceValue:value specifier:specifier];
 }
 
+- (void)txt_openURL:(PSSpecifier *)specifier {
+    NSURL *url = [NSURL URLWithString:specifier.properties[@"url"]];
+    [[UIApplication sharedApplication] openURL:url];
+}
+
 @end
