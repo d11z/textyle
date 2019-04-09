@@ -2,6 +2,7 @@
 #import "SparkAppList.h"
 
 static BOOL enabled;
+static BOOL colorMenu;
 static NSArray *styles;
 static NSArray *enabledStyles;
 static NSDictionary *blacklist;
@@ -148,6 +149,22 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 
 %end
 
+%hook UICalloutBarBackground
+
+- (void)layoutSubviews {
+    %orig;
+
+    UIVisualEffectView *tint = MSHookIvar<UIVisualEffectView *>(self, "_tintView");
+
+    if (menuOpen && colorMenu) {
+        tint.backgroundColor = [UIColor colorWithRed:1.00 green:0.18 blue:0.33 alpha:0.85f];
+    } else {
+        tint.backgroundColor = [UIColor colorWithRed:0.02 green:0.02 blue:0.02 alpha:0.85f];
+    }
+}
+
+%end
+
 %hook UIResponder
 
 - (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
@@ -262,8 +279,10 @@ static void loadPrefs() {
     if (!preferences) {
         preferences = [[NSMutableDictionary alloc] init];
         enabled = YES;
+        colorMenu = YES;
     } else {
         enabled = [[preferences objectForKey:@"Enabled"] boolValue];
+        colorMenu = [[preferences objectForKey:@"ColorMenu"] boolValue];
     }
 }
 

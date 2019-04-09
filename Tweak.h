@@ -41,3 +41,10 @@
 - (void)txtReplaceSelectedText:(NSDictionary *)map;
 
 @end
+
+
+@interface UICalloutBarBackground : UIView {
+    UIVisualEffectView *_tintView;
+}
+
+@end
