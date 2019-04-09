@@ -63,6 +63,10 @@
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated {
     [super setEditing:editing animated:animated];
     [self.table setEditing:editing animated:animated];
+
+    if (!editing) {
+        [styles writeToFile:kUserStylesPath atomically:YES];
+    }
 }
 
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -84,7 +88,7 @@
     [stylesEdited removeObjectAtIndex:sourceIndexPath.row];
     [stylesEdited insertObject:item atIndex:destinationIndexPath.row];
 
-    [stylesEdited writeToFile:kUserStylesPath atomically:YES];
+    styles = stylesEdited;
 }
 
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
