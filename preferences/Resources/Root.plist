@@ -38,7 +38,7 @@
 			<key>key</key>
 			<string>ColorMenu</string>
 			<key>label</key>
-			<string>Color Styles Menu</string>
+			<string>Color Menu BG</string>
 			<key>PostNotification</key>
 			<string>com.d11z.textyle/preferences</string>
 		</dict>
