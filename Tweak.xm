@@ -180,7 +180,7 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
     if (menuIcon && arg2 == @selector(txtOpenStyleMenu:)) {
         [self setupWithImage:nil action:arg2 type:3];
 
-        MSHookIvar<double>(self, "m_contentWidth") = 40;
+        MSHookIvar<double>(self, "m_contentWidth") = 45;
 
         NSString *imagePath = @"/Library/PreferenceBundles/Textyle.bundle/icon.png";
         UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:imagePath], CGSizeMake(24, 24));
