@@ -20,6 +20,9 @@
 
 @property (nonatomic, assign) SEL action;
 
+-(void)setupWithTitle:(id)arg1 action:(SEL)arg2 type:(int)arg3;
+-(void)setupWithImage:(id)arg1 action:(SEL)arg2 type:(int)arg3;
+
 @end
 
 

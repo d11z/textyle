@@ -3,6 +3,7 @@
 
 static BOOL enabled;
 static BOOL colorMenu;
+static BOOL menuIcon;
 static NSArray *styles;
 static NSArray *enabledStyles;
 static NSDictionary *blacklist;
@@ -165,6 +166,37 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 
 %end
 
+static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
+    UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
+    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return newImage;
+}
+
+%hook UICalloutBarButton
+
+- (void)setupWithTitle:(id)arg1 action:(SEL)arg2 type:(int)arg3 {
+    if (menuIcon && arg2 == @selector(txtOpenStyleMenu:)) {
+        [self setupWithImage:nil action:arg2 type:3];
+
+        MSHookIvar<double>(self, "m_contentWidth") = 40;
+
+        NSString *imagePath = @"/Library/PreferenceBundles/Textyle.bundle/icon.png";
+        UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:imagePath], CGSizeMake(24, 24));
+        UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+        [self addSubview:imageView];
+
+        imageView.translatesAutoresizingMaskIntoConstraints = NO;
+        [[imageView.centerXAnchor constraintEqualToAnchor:self.centerXAnchor] setActive:YES];
+        [[imageView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor] setActive:YES];
+    } else {
+        %orig;
+    }
+}
+
+%end
+
 %hook UIResponder
 
 - (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
@@ -280,9 +312,11 @@ static void loadPrefs() {
         preferences = [[NSMutableDictionary alloc] init];
         enabled = YES;
         colorMenu = YES;
+        menuIcon = NO;
     } else {
         enabled = [[preferences objectForKey:@"Enabled"] boolValue];
         colorMenu = [[preferences objectForKey:@"ColorMenu"] boolValue];
+        menuIcon = [[preferences objectForKey:@"MenuIcon"] boolValue];
     }
 }
 
