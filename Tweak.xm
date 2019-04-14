@@ -8,6 +8,7 @@ static NSArray *styles;
 static NSArray *enabledStyles;
 static NSDictionary *blacklist;
 static BOOL menuOpen = NO;
+static UIColor *defaultMenuColor;
 
 static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
     NSMutableString *stylized = [NSMutableString string];
@@ -157,10 +158,14 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
 
     UIVisualEffectView *tint = MSHookIvar<UIVisualEffectView *>(self, "_tintView");
 
+    if (!defaultMenuColor) {
+        defaultMenuColor = tint.backgroundColor;
+    }
+
     if (menuOpen && colorMenu) {
         tint.backgroundColor = [UIColor colorWithRed:1.00 green:0.18 blue:0.33 alpha:0.85f];
     } else {
-        tint.backgroundColor = [UIColor colorWithRed:0.02 green:0.02 blue:0.02 alpha:0.85f];
+        tint.backgroundColor = defaultMenuColor;
     }
 }
 
@@ -178,18 +183,10 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 
 - (void)setupWithTitle:(id)arg1 action:(SEL)arg2 type:(int)arg3 {
     if (menuIcon && arg2 == @selector(txtOpenStyleMenu:)) {
-        [self setupWithImage:nil action:arg2 type:3];
+        NSString *imagePath = @"/Library/PreferenceBundles/Textyle.bundle/menuIcon.png";
+        UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:imagePath], CGSizeMake(16, 16));
 
-        MSHookIvar<double>(self, "m_contentWidth") = 45;
-
-        NSString *imagePath = @"/Library/PreferenceBundles/Textyle.bundle/icon.png";
-        UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:imagePath], CGSizeMake(24, 24));
-        UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-        [self addSubview:imageView];
-
-        imageView.translatesAutoresizingMaskIntoConstraints = NO;
-        [[imageView.centerXAnchor constraintEqualToAnchor:self.centerXAnchor] setActive:YES];
-        [[imageView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor] setActive:YES];
+        [self setupWithImage:image action:arg2 type:arg3];
     } else {
         %orig;
     }
@@ -262,10 +259,7 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 %hook UITextField
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)sel {
-    if (%orig(sel)) {
-        return %orig(sel);
-    }
-    return %orig(@selector(txtDidSelectStyle:));
+    return %orig(sel) ?: %orig(@selector(txtDidSelectStyle:));
 }
 
 - (void)forwardInvocation:(NSInvocation *)invocation {
@@ -284,10 +278,7 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 %hook UITextView
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)sel {
-    if (%orig(sel)) {
-        return %orig(sel);
-    }
-    return %orig(@selector(txtDidSelectStyle:));
+    return %orig(sel) ?: %orig(@selector(txtDidSelectStyle:));
 }
 
 - (void)forwardInvocation:(NSInvocation *)invocation {
@@ -308,16 +299,9 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 static void loadPrefs() {
     NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefsPath];
 
-    if (!preferences) {
-        preferences = [[NSMutableDictionary alloc] init];
-        enabled = YES;
-        colorMenu = YES;
-        menuIcon = NO;
-    } else {
-        enabled = [[preferences objectForKey:@"Enabled"] boolValue];
-        colorMenu = [[preferences objectForKey:@"ColorMenu"] boolValue];
-        menuIcon = [[preferences objectForKey:@"MenuIcon"] boolValue];
-    }
+    enabled = [([preferences objectForKey:@"Enabled"] ?: @(YES)) boolValue];
+    colorMenu = [([preferences objectForKey:@"Enabled"] ?: @(YES)) boolValue];
+    menuIcon = [([preferences objectForKey:@"Enabled"] ?: @(NO)) boolValue];
 }
 
 static void loadStyles() {
