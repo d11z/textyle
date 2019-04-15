@@ -2,11 +2,15 @@
 #import "SparkAppList.h"
 
 static BOOL enabled;
-static BOOL colorMenu;
+static BOOL tintMenu;
 static BOOL menuIcon;
+static BOOL tintIcon;
+static NSString *menuLabel;
+
 static NSArray *styles;
 static NSArray *enabledStyles;
 static NSDictionary *blacklist;
+
 static BOOL menuOpen = NO;
 static UIColor *defaultMenuColor;
 
@@ -79,7 +83,7 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
     self = %orig;
 
     if (!self.txtMainMenuItem) {
-        self.txtMainMenuItem = [[UIMenuItem alloc] initWithTitle:@"Styles" action:@selector(txtOpenStyleMenu:)];
+        self.txtMainMenuItem = [[UIMenuItem alloc] initWithTitle:menuLabel action:@selector(txtOpenStyleMenu:)];
         self.txtMainMenuItem.dontDismiss = YES;
     }
 
@@ -162,11 +166,19 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
         defaultMenuColor = tint.backgroundColor;
     }
 
-    if (menuOpen && colorMenu) {
-        tint.backgroundColor = [UIColor colorWithRed:1.00 green:0.18 blue:0.33 alpha:0.85f];
+    if (menuOpen && tintMenu) {
+        tint.backgroundColor = kTintColor;
     } else {
         tint.backgroundColor = defaultMenuColor;
     }
+}
+
+%end
+
+%subclass TXTImageView : UIImageView
+
+-(long long)_defaultRenderingMode {
+    return 2;
 }
 
 %end
@@ -183,10 +195,13 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 
 - (void)setupWithTitle:(id)arg1 action:(SEL)arg2 type:(int)arg3 {
     if (menuIcon && arg2 == @selector(txtOpenStyleMenu:)) {
-        NSString *imagePath = @"/Library/PreferenceBundles/Textyle.bundle/menuIcon.png";
-        UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:imagePath], CGSizeMake(16, 16));
-
+        UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:kMenuIcon], CGSizeMake(18, 18));
         [self setupWithImage:image action:arg2 type:arg3];
+
+        if (tintIcon) {
+            object_setClass(self.imageView, %c(TXTImageView));
+            [self.imageView setTintColor:kTintColor];
+        }
     } else {
         %orig;
     }
@@ -300,8 +315,10 @@ static void loadPrefs() {
     NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefsPath];
 
     enabled = [([preferences objectForKey:@"Enabled"] ?: @(YES)) boolValue];
-    colorMenu = [([preferences objectForKey:@"Enabled"] ?: @(YES)) boolValue];
-    menuIcon = [([preferences objectForKey:@"Enabled"] ?: @(NO)) boolValue];
+    tintMenu = [([preferences objectForKey:@"TintMenu"] ?: @(YES)) boolValue];
+    menuIcon = [([preferences objectForKey:@"MenuIcon"] ?: @(YES)) boolValue];
+    tintIcon = [([preferences objectForKey:@"TintIcon"] ?: @(NO)) boolValue];
+    menuLabel = ([preferences objectForKey:@"MenuLabel"] ?: kDefaultMenuLabel);
 }
 
 static void loadStyles() {

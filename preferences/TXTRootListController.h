@@ -1,5 +1,5 @@
-#import <Preferences/PSListController.h>
+#import "TXTListController.h"
 
-@interface TXTRootListController : PSListController
+@interface TXTRootListController : TXTListController
 
 @end
