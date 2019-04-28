@@ -69,8 +69,8 @@
 
     if (_avatarImageView.alpha == 0) {
         [UIView animateWithDuration:0.15 animations:^{
-            _avatarImageView.alpha = 1;
-        }];
+                                             _avatarImageView.alpha = 1;
+                                         }];
     }
 }
 

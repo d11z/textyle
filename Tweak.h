@@ -1,25 +1,17 @@
-#define kPrefsPath @"/var/mobile/Library/Preferences/com.d11z.textyle.plist"
-#define kSystemStylesPath @"/Library/Application Support/Textyle/styles.plist"
-#define kUserStylesPath @"/var/mobile/Library/Preferences/com.d11z.textyle.maps.plist"
-#define kEnabledStylesPath @"/var/mobile/Library/Preferences/com.d11z.textyle.styles.plist"
-
-#define kTintColor [UIColor colorWithRed:1.00 green:0.18 blue:0.33 alpha:0.85f]
-#define kMenuIcon @"/Library/PreferenceBundles/Textyle.bundle/menuIcon.png"
-#define kDefaultMenuLabel @"Styles"
-
 @interface UICalloutBar : UIView
 @property (nonatomic, retain) NSArray *extraItems;
 @property (nonatomic, retain) UIMenuItem *txtMainMenuItem;
 @property (nonatomic, retain) NSArray *txtStyleMenuItems;
 + (id)sharedCalloutBar;
++ (void)_releaseSharedInstance;
 - (void)update;
 - (void)resetPage;
 @end
 
 @interface UICalloutBarButton : UIButton
 @property (nonatomic, assign) SEL action;
--(void)setupWithTitle:(id)arg1 action:(SEL)arg2 type:(int)arg3;
--(void)setupWithImage:(id)arg1 action:(SEL)arg2 type:(int)arg3;
+- (void)setupWithTitle:(id)arg1 action:(SEL)arg2 type:(int)arg3;
+- (void)setupWithImage:(id)arg1 action:(SEL)arg2 type:(int)arg3;
 @end
 
 @interface UIMenuItem (Textyle)
@@ -29,12 +21,50 @@
 @interface UIResponder (Textyle)
 - (NSRange)_selectedNSRange;
 - (id)_fullText;
-- (void)replaceRange:(id)arg1 withText:(id)arg2;
 - (id)_textRangeFromNSRange:(NSRange)arg1;
+- (void)replaceRange:(id)arg1 withText:(id)arg2;
 - (void)txtDidSelectStyle:(NSString *)name;
 - (void)txtReplaceSelectedText:(NSDictionary *)map;
 @end
 
 @interface UIImageView (Textyle)
 - (long long)_defaultRenderingMode;
+@end
+
+@interface UIKeyboardDockItemButton : UIButton
+@end
+
+@interface UIKeyboardDockItem : NSObject
+@property (nonatomic, readonly) UIView *view;
+@property (nonatomic, retain) NSString *identifier;
+@property (nonatomic, retain) UIImage *image;
+@property (nonatomic, assign) BOOL enabled;
+- (UIKeyboardDockItemButton *)button;
+- (id)initWithImageName:(id)arg1 identifier:(id)arg2;
+- (void)setEnabled:(BOOL)arg1;
+- (void)setImage:(UIImage *)arg1;
+- (void)setLongPressGestureRecognizer:(UILongPressGestureRecognizer *)arg1;
+@end
+
+@interface UIKeyboardDockView : UIView
+@property (nonatomic, retain) UIKeyboardDockItem *rightDockItem;
+- (void)setRightDockItem:(UIKeyboardDockItem *)arg1;
+- (void)_dockItemButtonWasTapped:(id)arg1 withEvent:(id)arg2;
+@end
+
+@interface UISystemKeyboardDockController : UIViewController
+- (void)loadView;
+- (void)keyboardDockView:(id)arg1 didPressDockItem:(id)arg2 withEvent:(id)arg3;
+- (void)dictationItemButtonWasPressed:(id)arg1 withEvent:(id)arg2;
+- (void)txtToggleActive;
+- (void)longPress:(UILongPressGestureRecognizer *)gesture;
+@end
+
+@interface UIKeyboardImpl : UIView
+- (void)insertText:(id)arg1;
+@end
+
+@interface UIRemoteKeyboardWindow : UIWindow
+- (double)windowLevel;
+- (double)defaultWindowLevel;
 @end

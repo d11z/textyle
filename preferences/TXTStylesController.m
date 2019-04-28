@@ -1,4 +1,5 @@
 #import "TXTStylesController.h"
+#import <Preferences/PSSpecifier.h>
 
 #define kUserStylesPath @"/var/mobile/Library/Preferences/com.d11z.textyle.maps.plist"
 
@@ -28,12 +29,12 @@
 
         for (NSDictionary *style in styles) {
             PSSpecifier *item = [PSSpecifier preferenceSpecifierNamed:style[@"label"]
-                                                            target:self
-                                                            set:@selector(setPreferenceValue:specifier:)
-                                                            get:@selector(readPreferenceValue:)
-                                                            detail:Nil
-                                                            cell:PSSwitchCell
-                                                            edit:Nil];
+                                                               target:self
+                                                                  set:@selector(setPreferenceValue:specifier:)
+                                                                  get:@selector(readPreferenceValue:)
+                                                               detail:Nil
+                                                                 cell:PSSwitchCell
+                                                                 edit:Nil];
 
             [item setProperty:style[@"name"] forKey:@"key"];
             [item setProperty:@YES forKey:@"enabled"];
@@ -70,7 +71,7 @@
 }
 
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return UITableViewCellEditingStyleNone; 
+    return UITableViewCellEditingStyleNone;
 }
 
 - (BOOL)tableView:(UITableView *)tableview shouldIndentWhileEditingRowAtIndexPath:(NSIndexPath *)indexPath {

@@ -1,4 +1,5 @@
 #import "TXTListController.h"
+#import <Preferences/PSSpecifier.h>
 
 @implementation TXTListController
 

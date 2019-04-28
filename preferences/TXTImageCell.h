@@ -2,5 +2,4 @@
 #import <Preferences/PSHeaderFooterView.h>
 
 @interface TXTImageCell : PSTableCell <PSHeaderFooterView>
-
 @end

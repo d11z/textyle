@@ -1,5 +1,6 @@
 #import "TXTRootListController.h"
 #import "TXTAppListController.h"
+#import <Preferences/PSSpecifier.h>
 
 @implementation TXTRootListController
 
@@ -13,12 +14,14 @@
 
 - (void)showBlacklistController {
     TXTAppListController *appListController = [[TXTAppListController alloc] initWithIdentifier:@"com.d11z.textyle" andKey:@"Blacklist"];
+
     [self.navigationController pushViewController:appListController animated:YES];
     self.navigationItem.hidesBackButton = FALSE;
 }
 
 - (void)txt_openURL:(PSSpecifier *)specifier {
     NSURL *url = [NSURL URLWithString:specifier.properties[@"url"]];
+
     [[UIApplication sharedApplication] openURL:url];
 }
 

@@ -1,0 +1,2 @@
+@interface TXTCollectionView : UICollectionView
+@end

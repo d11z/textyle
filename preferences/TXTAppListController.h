@@ -3,5 +3,4 @@
 @interface TXTAppListController : SparkAppListTableViewController {
     UIWindow *settingsView;
 }
-
 @end

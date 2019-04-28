@@ -1,76 +1,26 @@
 #import "Tweak.h"
+#import "TXTConstants.h"
+#import "TXTStyleSelectionWindow.h"
+#import "TXTStyleManager.h"
+#import "NSString+Stylize.h"
 #import "SparkAppList.h"
 
 static BOOL enabled;
+static BOOL toggleMenu;
 static BOOL tintMenu;
 static BOOL menuIcon;
 static BOOL tintIcon;
 static NSString *menuLabel;
 
-static NSArray *styles;
-static NSArray *enabledStyles;
+static TXTStyleManager *styleManager;
 static NSDictionary *blacklist;
 
 static BOOL menuOpen = NO;
 static UIColor *defaultMenuColor;
 
-static NSString *stylizeTextWithMap(NSString *text, NSDictionary *map) {
-    NSMutableString *stylized = [NSMutableString string];
-    NSUInteger length = text.length;
-    unichar buffer[length+1];
-
-    [text getCharacters:buffer range:NSMakeRange(0, length)];
-
-    for (int i = 0; i < length; i++) {
-        NSString *key = [NSString stringWithFormat:@"%C", buffer[i]];
-
-        if ([map objectForKey:key]) {
-            [stylized appendString:map[key]];
-        } else {
-            [stylized appendString:key];
-        }
-    }
-
-    return stylized;
-}
-
-static NSString *stylizeTextSpongebob(NSString *text) {
-    NSCharacterSet *letters = [NSCharacterSet letterCharacterSet];
-    NSMutableString *stylized = [NSMutableString string];
-    NSUInteger length = text.length;
-    unichar buffer[length+1];
-
-    [text getCharacters:buffer range:NSMakeRange(0, length)];
-
-    int j = 0;
-    for (int i = 0; i < length; i++) {
-        NSString *s = [NSString stringWithFormat:@"%C", buffer[i]];
-
-        if ([letters characterIsMember:buffer[i]]) {
-            [stylized appendString:(j++ % 2) ? [s localizedUppercaseString] : [s localizedLowercaseString]];
-        } else {
-            [stylized appendString:s];
-        }
-    }
-
-    return stylized;
-}
-
-static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combiningChar) {
-    NSMutableString *stylized = [NSMutableString string];
-    NSUInteger length = text.length;
-    unichar buffer[length+1];
-
-    [text getCharacters:buffer range:NSMakeRange(0, length)];
-
-    for (int i = 0; i < length; i++) {
-        NSString *s = [NSString stringWithFormat:@"%C", buffer[i]];
-        [stylized appendString:s];
-        [stylized appendString:combiningChar];
-    }
-
-    return stylized;
-}
+static BOOL active = NO;
+static TXTStyleSelectionWindow *selectionWindow;
+static NSUInteger spongebobCounter = 0;
 
 %group Textyle
 
@@ -90,6 +40,7 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
     if (!self.txtStyleMenuItems) {
         NSMutableArray *items = [NSMutableArray array];
 
+        NSArray *styles = [styleManager enabledStyles];
         for (NSDictionary *style in styles) {
             NSString *action = [NSString stringWithFormat:@"txt_%@", style[@"name"]];
             UIMenuItem *item = [[UIMenuItem alloc] initWithTitle:style[@"label"] action:NSSelectorFromString(action)];
@@ -167,7 +118,7 @@ static NSString *stylizeTextWithCombiningChar(NSString *text, NSString *combinin
     }
 
     if (menuOpen && tintMenu) {
-        tint.backgroundColor = kTintColor;
+        tint.backgroundColor = kMenuTintColor;
     } else {
         tint.backgroundColor = defaultMenuColor;
     }
@@ -200,7 +151,7 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 
         if (tintIcon) {
             object_setClass(self.imageView, %c(TXTImageView));
-            [self.imageView setTintColor:kTintColor];
+            [self.imageView setTintColor:kAccentColor];
         }
     } else {
         %orig;
@@ -215,14 +166,8 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
     NSString *sel = NSStringFromSelector(action);
     NSRange match = [sel rangeOfString:@"txt_"];
 
-    if (match.location == 0) {
-        NSString *name = [sel substringFromIndex:4];
-        return menuOpen && [enabledStyles containsObject:name];
-    }
-
-    if (menuOpen) return NO;
-
-    return %orig;
+    if (menuOpen) return match.location == 0;
+    else return %orig;
 }
 
 %new
@@ -248,25 +193,13 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 - (void)txtDidSelectStyle:(NSString *)name {
     menuOpen = NO;
 
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"(name == %@)", name];
-    NSArray *arr = [styles filteredArrayUsingPredicate:predicate];
-    NSDictionary *style = [arr objectAtIndex:0];
-
+    NSDictionary *style = [styleManager styleWithName:name];
     NSRange selectedRange = [self _selectedNSRange];
     NSString *original = [self _fullText];
     NSString *selectedText = [original substringWithRange:selectedRange];
-
-    NSString *stylized;
-    if (style[@"map"]) {
-        stylized = stylizeTextWithMap(selectedText, style[@"map"]);
-    } else if (style[@"combine"]) {
-        stylized = stylizeTextWithCombiningChar(selectedText, style[@"combine"]);
-    } else if ([style[@"function"] isEqualToString:@"spongebob"]) {
-        stylized = stylizeTextSpongebob(selectedText);
-    }
-
     UITextRange *textRange = [self _textRangeFromNSRange:selectedRange];
-    [self replaceRange:textRange withText:stylized]; 
+
+    [self replaceRange:textRange withText:[NSString stylizeText:selectedText withStyle:style]];
 }
 
 %end
@@ -311,41 +244,130 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 
 %end
 
+%group ToggleMenu
+
+%hook UIKeyboardDockItem
+
+- (id)initWithImageName:(id)arg1 identifier:(id)arg2 {
+    return %orig(arg1, [arg2 isEqualToString:@"dictation"] ? @"textyle" : arg2);
+}
+
+- (void)setEnabled:(BOOL)arg1 {
+    %orig([self.identifier isEqualToString:@"textyle"] ?: arg1);
+}
+
+%end
+
+%subclass TXTDockItemButton : UIKeyboardDockItemButton
+
+- (void)setTintColor:(UIColor *)arg1 {
+    %orig(active ? kAccentColor : arg1);
+}
+
+%end
+
+%hook UISystemKeyboardDockController
+
+- (void)loadView {
+    %orig;
+
+    UIKeyboardDockItem *dockItem = MSHookIvar<UIKeyboardDockItem *>(self, "_dictationDockItem");
+    object_setClass(dockItem.button, %c(TXTDockItemButton));
+
+    UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:kMenuIcon], CGSizeMake(27, 27));
+    [dockItem.button setImage:image forState:UIControlStateNormal];
+
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
+    longPress.cancelsTouchesInView = NO;
+    longPress.minimumPressDuration = 0.3f;
+    [dockItem.button addGestureRecognizer:longPress];
+
+    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(txtToggleActive)];
+    singleTap.numberOfTapsRequired = 1;
+    [dockItem.button addGestureRecognizer:singleTap];
+}
+
+- (void)dictationItemButtonWasPressed:(id)arg1 withEvent:(id)arg2 {
+    return;
+}
+
+%new
+- (void)txtToggleActive {
+    active = !active;
+
+    if (active) {
+        spongebobCounter = 0;
+    }
+
+    UIKeyboardDockItem *dockItem = MSHookIvar<UIKeyboardDockItem *>(self, "_dictationDockItem");
+    [dockItem.button setTintColor:kAccentColor];
+}
+
+%new
+- (void)longPress:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        if (!active) {
+            [self txtToggleActive];
+        }
+
+        UIImpactFeedbackGenerator *hapticFeedbackGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+        [hapticFeedbackGenerator prepare];
+        [hapticFeedbackGenerator impactOccurred];
+        hapticFeedbackGenerator = nil;
+
+        if (!selectionWindow) {
+            selectionWindow = [[TXTStyleSelectionWindow alloc] init];
+        }
+
+        [selectionWindow show];
+    }
+}
+
+%end
+
+%hook UIKeyboardImpl
+
+- (void)insertText:(id)arg1 {
+    NSString *text = arg1;
+
+    if (active) {
+        NSDictionary *activeStyle = [styleManager activeStyle];
+        NSCharacterSet *letters = [NSCharacterSet letterCharacterSet];
+        BOOL isLetter = [letters characterIsMember:[arg1 characterAtIndex:0]];
+
+        if ([activeStyle[@"function"] isEqualToString:@"spongebob"]) {
+            text = isLetter ? [NSString stylizeTextSpongebobActive:arg1 counter:spongebobCounter++] : arg1;
+        } else {
+            text = [NSString stylizeText:arg1 withStyle:activeStyle];
+        }
+    }
+
+    %orig(text);
+}
+
+%end
+
+%hook UIRemoteKeyboardWindow
+- (double)windowLevel { return 999999; }
+- (double)defaultWindowLevel { return 999999; }
+- (void)setWindowLevel:(double)arg1 { %orig(999999); }
+- (void)_setWindowLevel:(double)arg1 { %orig(999999); }
+- (void)setDefaultWindowLevel:(double)arg1 { %orig(999999); }
+- (void)setLevel:(double)arg1 { %orig(999999); }
+- (double)level { return 999999; }
+%end
+
+%end
+
 static void loadPrefs() {
     NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefsPath];
 
     enabled = [([preferences objectForKey:@"Enabled"] ?: @(YES)) boolValue];
+    toggleMenu = [([preferences objectForKey:@"ToggleMenu"] ?: @(YES)) boolValue];
     tintMenu = [([preferences objectForKey:@"TintMenu"] ?: @(YES)) boolValue];
     menuIcon = [([preferences objectForKey:@"MenuIcon"] ?: @(YES)) boolValue];
     tintIcon = [([preferences objectForKey:@"TintIcon"] ?: @(NO)) boolValue];
     menuLabel = ([preferences objectForKey:@"MenuLabel"] ?: kDefaultMenuLabel);
-}
-
-static void loadStyles() {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-
-    if (![fileManager fileExistsAtPath:kUserStylesPath]) {
-        styles = [[NSArray alloc] initWithContentsOfFile:kSystemStylesPath];
-    } else {
-        styles = [[NSArray alloc] initWithContentsOfFile:kUserStylesPath];
-    }
-}
-
-static void loadEnabledStyles() {
-    NSMutableDictionary *stylePreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kEnabledStylesPath];
-
-    NSMutableArray *_enabledStyles = [NSMutableArray array];
-    for (NSDictionary *style in styles) {
-        if (!stylePreferences) {
-            [_enabledStyles addObject:style[@"name"]];
-        } else {
-            if ([[stylePreferences objectForKey:style[@"name"]] boolValue]) {
-                [_enabledStyles addObject:style[@"name"]];
-            }
-        }
-    }
-
-    enabledStyles = [_enabledStyles copy]; 
 }
 
 static void notificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
@@ -353,7 +375,13 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
 }
 
 static void enabledStylesNotificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
-    loadEnabledStyles();
+    [UICalloutBar _releaseSharedInstance];
+    [selectionWindow reload];
+}
+
+static void activeStyleNotificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    [selectionWindow reload];
+    [selectionWindow hideWithDelay:0.15];
 }
 
 __attribute__((always_inline)) bool check_crack() {
@@ -361,9 +389,19 @@ __attribute__((always_inline)) bool check_crack() {
 }
 
 %ctor {
-    bool shouldLoad = YES;
-
     NSString *identifier = [NSBundle mainBundle].bundleIdentifier;
+    NSArray *args = [[NSProcessInfo processInfo] arguments];
+    BOOL isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
+    BOOL shouldLoad = NO;
+
+    if (args.count != 0) {
+        NSString *executablePath = args[0];
+        if (executablePath) {
+            BOOL isApplication = [executablePath rangeOfString:@"/Application"].location != NSNotFound;
+            shouldLoad = isSpringBoard || isApplication;
+        }
+    }
+
     if ([SparkAppList doesIdentifier:@"com.d11z.textyle" andKey:@"Blacklist" containBundleIdentifier:identifier]) {
         shouldLoad = NO;
     }
@@ -372,25 +410,42 @@ __attribute__((always_inline)) bool check_crack() {
         return;
     }
 
-    loadStyles();
+    styleManager = [TXTStyleManager sharedManager];
+    if (isSpringBoard) {
+        [styleManager initForSpringBoard];
+    }
 
     loadPrefs();
-    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-                                    NULL,
-                                    notificationCallback,
-                                    CFSTR("com.d11z.textyle/preferences"),
-                                    NULL,
-                                    CFNotificationSuspensionBehaviorCoalesce
-                                    );
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDarwinNotifyCenter(),
+        NULL,
+        notificationCallback,
+        CFSTR("com.d11z.textyle/preferences"),
+        NULL,
+        CFNotificationSuspensionBehaviorCoalesce
+    );
 
-    loadEnabledStyles();
-    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-                                    NULL,
-                                    enabledStylesNotificationCallback,
-                                    CFSTR("com.d11z.textyle.styles/enabledStyles"),
-                                    NULL,
-                                    CFNotificationSuspensionBehaviorCoalesce
-                                    );
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDarwinNotifyCenter(),
+        NULL,
+        enabledStylesNotificationCallback,
+        CFSTR("com.d11z.textyle.styles/enabledStyles"),
+        NULL,
+        CFNotificationSuspensionBehaviorCoalesce
+    );
+
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDarwinNotifyCenter(),
+        NULL,
+        activeStyleNotificationCallback,
+        CFSTR("com.d11z.textyle.styles/activeStyle"),
+        NULL,
+        CFNotificationSuspensionBehaviorCoalesce
+    );
 
     %init(Textyle);
+
+    if (enabled && toggleMenu) {
+        %init(ToggleMenu);
+    }
 }

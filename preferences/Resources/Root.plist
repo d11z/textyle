@@ -30,6 +30,20 @@
 		</dict>
 		<dict>
 			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.d11z.textyle</string>
+			<key>key</key>
+			<string>ToggleMenu</string>
+			<key>label</key>
+			<string>Enable Keyboard Toggle</string>
+			<key>PostNotification</key>
+			<string>com.d11z.textyle/preferences</string>
+		</dict>
+		<dict>
+			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>footerText</key>
 			<string>Reordering styles or blacklisting an app requires you to restart your apps or respring to apply changes</string>
