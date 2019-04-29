@@ -1,7 +1,7 @@
 Package: com.d11z.textyle
 Name: Textyle
 Depends: mobilesubstrate, com.spark.libsparkapplist
-Version: 1.2
+Version: 1.3
 Architecture: iphoneos-arm
 Description: Quickly style any text
 Maintainer: Deniz Basegmez
