@@ -74,10 +74,11 @@
     return stylized;
 }
 
-+ (NSString *)stylizeTextSpongebobActive:(NSString *)text counter:(NSUInteger)counter {
++ (NSString *)stylizeTextSpongebobActive:(NSString *)text counter:(int *)counter {
     NSString *stylized;
+    *counter += 1;
 
-    stylized = (counter % 2) ? [text localizedUppercaseString] : [text localizedLowercaseString];
+    stylized = (*counter % 2) ? [text localizedUppercaseString] : [text localizedLowercaseString];
     return stylized;
 }
 

@@ -1,26 +1,17 @@
 #import "Tweak.h"
 #import "TXTConstants.h"
-#import "TXTStyleSelectionWindow.h"
 #import "TXTStyleManager.h"
+#import "TXTStyleSelectionWindow.h"
 #import "NSString+Stylize.h"
 #import "SparkAppList.h"
 
-static BOOL enabled;
-static BOOL toggleMenu;
-static BOOL tintMenu;
-static BOOL menuIcon;
-static BOOL tintIcon;
-static NSString *menuLabel;
-
-static TXTStyleManager *styleManager;
-static NSDictionary *blacklist;
-
-static BOOL menuOpen = NO;
-static UIColor *defaultMenuColor;
-
-static BOOL active = NO;
-static TXTStyleSelectionWindow *selectionWindow;
-static NSUInteger spongebobCounter = 0;
+static UIImage * resizeImage(UIImage *original, CGSize size) {
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
+    [original drawInRect:CGRectMake(0, 0, size.width, size.height)];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
 
 %group Textyle
 
@@ -57,39 +48,27 @@ static NSUInteger spongebobCounter = 0;
 - (void)updateAvailableButtons {
     %orig;
 
-    if (!self.extraItems) {
-        self.extraItems = @[];
-    }
+    if (!self.extraItems) self.extraItems = @[];
 
     BOOL isSelected = NO;
     NSMutableArray *currentSystemButtons = MSHookIvar<NSMutableArray *>(self, "m_currentSystemButtons");
     for (UICalloutBarButton *btn in currentSystemButtons) {
-        if (btn.action == @selector(cut:)) {
-            isSelected = YES;
-        }
+        if (btn.action == @selector(cut:)) isSelected = YES;
     }
 
     NSMutableArray *items = [self.extraItems mutableCopy];
 
     if (isSelected && enabled) {
-        if (![items containsObject:self.txtMainMenuItem]) {
-            [items addObject:self.txtMainMenuItem];
-        }
-    } else {
-        [items removeObject:self.txtMainMenuItem];
-    }
+        if (![items containsObject:self.txtMainMenuItem]) [items addObject:self.txtMainMenuItem];
+    } else [items removeObject:self.txtMainMenuItem];
 
     if (menuOpen) {
         items = [NSMutableArray array];
         for (UIMenuItem *item in self.txtStyleMenuItems) {
-            if (![items containsObject:item]) {
-                [items addObject:item];
-            }
+            if (![items containsObject:item]) [items addObject:item];
         }
-    } else {
-        for (UIMenuItem *item in self.txtStyleMenuItems) {
-            [items removeObject:item];
-        }
+    } else for (UIMenuItem *item in self.txtStyleMenuItems) {
+        [items removeObject:item];
     }
 
     self.extraItems = items;
@@ -113,15 +92,10 @@ static NSUInteger spongebobCounter = 0;
 
     UIVisualEffectView *tint = MSHookIvar<UIVisualEffectView *>(self, "_tintView");
 
-    if (!defaultMenuColor) {
-        defaultMenuColor = tint.backgroundColor;
-    }
+    if (!defaultMenuColor) defaultMenuColor = tint.backgroundColor;
 
-    if (menuOpen && tintMenu) {
-        tint.backgroundColor = kMenuTintColor;
-    } else {
-        tint.backgroundColor = defaultMenuColor;
-    }
+    if (menuOpen && tintMenu) tint.backgroundColor = kAccentColorAlpha;
+    else tint.backgroundColor = defaultMenuColor;
 }
 
 %end
@@ -134,28 +108,18 @@ static NSUInteger spongebobCounter = 0;
 
 %end
 
-static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
-    UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
-    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
-    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return newImage;
-}
-
 %hook UICalloutBarButton
 
 - (void)setupWithTitle:(id)arg1 action:(SEL)arg2 type:(int)arg3 {
     if (menuIcon && arg2 == @selector(txtOpenStyleMenu:)) {
-        UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:kMenuIcon], CGSizeMake(18, 18));
+        UIImage *image = resizeImage([UIImage imageWithContentsOfFile:kMenuIcon], CGSizeMake(18, 18));
         [self setupWithImage:image action:arg2 type:arg3];
 
         if (tintIcon) {
             object_setClass(self.imageView, %c(TXTImageView));
             [self.imageView setTintColor:kAccentColor];
         }
-    } else {
-        %orig;
-    }
+    } else %orig;
 }
 
 %end
@@ -214,11 +178,8 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
     NSString *sel = NSStringFromSelector([invocation selector]);
     NSRange match = [sel rangeOfString:@"txt_"];
 
-    if (match.location == 0) {
-        [self txtDidSelectStyle:[sel substringFromIndex:4]];
-    } else {
-        %orig(invocation);
-    }
+    if (match.location == 0) [self txtDidSelectStyle:[sel substringFromIndex:4]];
+    else %orig(invocation);
 }
 
 %end
@@ -233,11 +194,8 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
     NSString *sel = NSStringFromSelector([invocation selector]);
     NSRange match = [sel rangeOfString:@"txt_"];
 
-    if (match.location == 0) {
-        [self txtDidSelectStyle:[sel substringFromIndex:4]];
-    } else {
-        %orig(invocation);
-    }
+    if (match.location == 0) [self txtDidSelectStyle:[sel substringFromIndex:4]];
+    else %orig(invocation);
 }
 
 %end
@@ -261,7 +219,7 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 %subclass TXTDockItemButton : UIKeyboardDockItemButton
 
 - (void)setTintColor:(UIColor *)arg1 {
-    %orig(active ? kAccentColor : arg1);
+    %orig(active ? kAccentColorAlpha : arg1);
 }
 
 %end
@@ -274,10 +232,10 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
     UIKeyboardDockItem *dockItem = MSHookIvar<UIKeyboardDockItem *>(self, "_dictationDockItem");
     object_setClass(dockItem.button, %c(TXTDockItemButton));
 
-    UIImage *image = imageWithImage([UIImage imageWithContentsOfFile:kMenuIcon], CGSizeMake(27, 27));
+    UIImage *image = resizeImage([UIImage imageWithContentsOfFile:kMenuIcon], CGSizeMake(27, 27));
     [dockItem.button setImage:image forState:UIControlStateNormal];
 
-    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(txtLongPress:)];
     longPress.cancelsTouchesInView = NO;
     longPress.minimumPressDuration = 0.3f;
     [dockItem.button addGestureRecognizer:longPress];
@@ -294,31 +252,23 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
 %new
 - (void)txtToggleActive {
     active = !active;
-
-    if (active) {
-        spongebobCounter = 0;
-    }
+    if (active) spongebobCounter = 0;
 
     UIKeyboardDockItem *dockItem = MSHookIvar<UIKeyboardDockItem *>(self, "_dictationDockItem");
-    [dockItem.button setTintColor:kAccentColor];
+    [dockItem.button setTintColor:kAccentColorAlpha];
 }
 
 %new
-- (void)longPress:(UILongPressGestureRecognizer *)gesture {
+- (void)txtLongPress:(UILongPressGestureRecognizer *)gesture {
     if (gesture.state == UIGestureRecognizerStateBegan) {
-        if (!active) {
-            [self txtToggleActive];
-        }
+        if (!active) [self txtToggleActive];
 
         UIImpactFeedbackGenerator *hapticFeedbackGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
         [hapticFeedbackGenerator prepare];
         [hapticFeedbackGenerator impactOccurred];
         hapticFeedbackGenerator = nil;
 
-        if (!selectionWindow) {
-            selectionWindow = [[TXTStyleSelectionWindow alloc] init];
-        }
-
+        if (!selectionWindow) selectionWindow = [[TXTStyleSelectionWindow alloc] init];
         [selectionWindow show];
     }
 }
@@ -336,7 +286,7 @@ static UIImage * imageWithImage(UIImage *image, CGSize newSize) {
         BOOL isLetter = [letters characterIsMember:[arg1 characterAtIndex:0]];
 
         if ([activeStyle[@"function"] isEqualToString:@"spongebob"]) {
-            text = isLetter ? [NSString stylizeTextSpongebobActive:arg1 counter:spongebobCounter++] : arg1;
+            text = isLetter ? [NSString stylizeTextSpongebobActive:arg1 counter:&spongebobCounter] : arg1;
         } else {
             text = [NSString stylizeText:arg1 withStyle:activeStyle];
         }
@@ -389,9 +339,9 @@ __attribute__((always_inline)) bool check_crack() {
 }
 
 %ctor {
-    NSString *identifier = [NSBundle mainBundle].bundleIdentifier;
-    NSArray *args = [[NSProcessInfo processInfo] arguments];
-    BOOL isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
+    NSString *const identifier = [NSBundle mainBundle].bundleIdentifier;
+    NSArray *const args = [[NSProcessInfo processInfo] arguments];
+    BOOL const isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
     BOOL shouldLoad = NO;
 
     if (args.count != 0) {
@@ -406,20 +356,17 @@ __attribute__((always_inline)) bool check_crack() {
         shouldLoad = NO;
     }
 
-    if (!shouldLoad || !check_crack()) {
-        return;
-    }
+    if (!shouldLoad || !check_crack()) return;
 
     styleManager = [TXTStyleManager sharedManager];
-    if (isSpringBoard) {
-        [styleManager initForSpringBoard];
-    }
+    if (isSpringBoard) [styleManager initForSpringBoard];
 
     loadPrefs();
+
     CFNotificationCenterAddObserver(
         CFNotificationCenterGetDarwinNotifyCenter(),
         NULL,
-        notificationCallback,
+        (CFNotificationCallback)notificationCallback,
         CFSTR("com.d11z.textyle/preferences"),
         NULL,
         CFNotificationSuspensionBehaviorCoalesce
@@ -428,7 +375,7 @@ __attribute__((always_inline)) bool check_crack() {
     CFNotificationCenterAddObserver(
         CFNotificationCenterGetDarwinNotifyCenter(),
         NULL,
-        enabledStylesNotificationCallback,
+        (CFNotificationCallback)enabledStylesNotificationCallback,
         CFSTR("com.d11z.textyle.styles/enabledStyles"),
         NULL,
         CFNotificationSuspensionBehaviorCoalesce
@@ -437,11 +384,15 @@ __attribute__((always_inline)) bool check_crack() {
     CFNotificationCenterAddObserver(
         CFNotificationCenterGetDarwinNotifyCenter(),
         NULL,
-        activeStyleNotificationCallback,
+        (CFNotificationCallback)activeStyleNotificationCallback,
         CFSTR("com.d11z.textyle.styles/activeStyle"),
         NULL,
         CFNotificationSuspensionBehaviorCoalesce
     );
+
+    menuOpen = NO;
+    active = NO;
+    spongebobCounter = 0;
 
     %init(Textyle);
 

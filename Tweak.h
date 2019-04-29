@@ -43,21 +43,13 @@
 - (id)initWithImageName:(id)arg1 identifier:(id)arg2;
 - (void)setEnabled:(BOOL)arg1;
 - (void)setImage:(UIImage *)arg1;
-- (void)setLongPressGestureRecognizer:(UILongPressGestureRecognizer *)arg1;
-@end
-
-@interface UIKeyboardDockView : UIView
-@property (nonatomic, retain) UIKeyboardDockItem *rightDockItem;
-- (void)setRightDockItem:(UIKeyboardDockItem *)arg1;
-- (void)_dockItemButtonWasTapped:(id)arg1 withEvent:(id)arg2;
 @end
 
 @interface UISystemKeyboardDockController : UIViewController
 - (void)loadView;
-- (void)keyboardDockView:(id)arg1 didPressDockItem:(id)arg2 withEvent:(id)arg3;
 - (void)dictationItemButtonWasPressed:(id)arg1 withEvent:(id)arg2;
 - (void)txtToggleActive;
-- (void)longPress:(UILongPressGestureRecognizer *)gesture;
+- (void)txtLongPress:(UILongPressGestureRecognizer *)gesture;
 @end
 
 @interface UIKeyboardImpl : UIView
@@ -68,3 +60,21 @@
 - (double)windowLevel;
 - (double)defaultWindowLevel;
 @end
+
+@class TXTStyleManager, TXTStyleSelectionWindow;
+
+static TXTStyleManager *styleManager;
+static UIColor *defaultMenuColor;
+static TXTStyleSelectionWindow *selectionWindow;
+
+static BOOL enabled;
+static BOOL toggleMenu;
+static BOOL tintMenu;
+static BOOL menuIcon;
+static BOOL tintIcon;
+static NSString *menuLabel;
+static NSDictionary *blacklist;
+
+static BOOL menuOpen;
+static BOOL active;
+static int spongebobCounter;
