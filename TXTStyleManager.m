@@ -87,8 +87,6 @@ static void TXTEnabledStylesChanged(
 
 // server
 - (void)initForSpringBoard {
-    NSLog(@"[Textyle] initForSpringBoard");
-
     CPDistributedMessagingCenter *messageCenter = [CPDistributedMessagingCenter centerNamed:kMessageCenter];
     rocketbootstrap_distributedmessagingcenter_apply(messageCenter);
     [messageCenter runServerOnCurrentThread];

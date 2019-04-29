@@ -4,6 +4,7 @@
 #import "TXTStyleSelectionWindow.h"
 #import "NSString+Stylize.h"
 #import "SparkAppList.h"
+#import <CommonCrypto/CommonCrypto.h>
 
 static UIImage * resizeImage(UIImage *original, CGSize size) {
     UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
@@ -11,6 +12,65 @@ static UIImage * resizeImage(UIImage *original, CGSize size) {
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;
+}
+
+static const unsigned char _key[] = { 0x1C, 0x46, 0x55, 0x46, 0x1D, 0x5B, 0x50, 0x7, 0x4A, 0x56, 0x12, 0x5E, 0x50, 0x49, 0x51, 0x5A, 0x5E, 0xD, 0x19, 0x56, 0x5D, 0x8, 0x4C, 0x6, 0x3, 0x2, 0x49, 0x4D, 0x4C, 0x51, 0x49, 0x46, 0x1D, 0x5A, 0x4, 0x4C, 0x5E, 0xA, 0x46, 0x4C, 0x00 };
+static const unsigned char *key = &_key[0];
+static const NSString *salt;
+
+inline NSString * __attribute__((always_inline)) NS_REQUIRES_NIL_TERMINATION createSalt(Class clazz, ...) {
+    NSMutableString *classes;
+    id eachClass;
+    va_list argumentList;
+
+    if (clazz) {
+        classes = [[NSMutableString alloc] initWithString:NSStringFromClass(clazz)];
+        va_start(argumentList, clazz);
+        while ((eachClass = va_arg(argumentList, id))) {
+            [classes appendString:NSStringFromClass(eachClass)];
+        }
+        va_end(argumentList);
+    }
+
+    NSData *d = [[classes copy] dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char obfuscator[CC_SHA1_DIGEST_LENGTH];
+
+    CC_SHA1(d.bytes, (CC_LONG)d.length, obfuscator);
+
+    NSMutableString *output = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
+        [output appendFormat:@"%02x", obfuscator[i]];
+    }
+
+    return [output copy];
+}
+
+inline NSString * __attribute__((always_inline)) decode(const unsigned char *string) {
+    if (!salt) {
+        salt = createSalt([SparkAppList class], [UICalloutBar class], [TXTStyleSelectionWindow class], [TXTStyleManager class], nil);
+    }
+
+    NSData *data = [[[NSString alloc] initWithFormat:@"%s", string] dataUsingEncoding:NSUTF8StringEncoding];
+    char *dataPtr = (char *)[data bytes];
+    char *keyData = (char *)[[salt dataUsingEncoding:NSUTF8StringEncoding] bytes];
+    char *keyPtr = keyData;
+    int keyIndex = 0;
+
+    for (int x = 0; x < [data length]; x++) {
+        *dataPtr = *dataPtr ^ *keyPtr;
+        dataPtr++;
+        keyPtr++;
+
+        if (++keyIndex == [salt length]) {
+            keyIndex = 0, keyPtr = keyData;
+        }
+    }
+
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+}
+
+inline bool __attribute__((always_inline)) check_crack() {
+    return [[NSFileManager defaultManager] fileExistsAtPath:decode(key)];
 }
 
 %group Textyle
@@ -22,6 +82,8 @@ static UIImage * resizeImage(UIImage *original, CGSize size) {
 
 - (id)initWithFrame:(CGRect)arg1 {
     self = %orig;
+
+    if (!check_crack()) return self;
 
     if (!self.txtMainMenuItem) {
         self.txtMainMenuItem = [[UIMenuItem alloc] initWithTitle:menuLabel action:@selector(txtOpenStyleMenu:)];
@@ -229,6 +291,8 @@ static UIImage * resizeImage(UIImage *original, CGSize size) {
 - (void)loadView {
     %orig;
 
+    if (!check_crack()) return;
+
     UIKeyboardDockItem *dockItem = MSHookIvar<UIKeyboardDockItem *>(self, "_dictationDockItem");
     object_setClass(dockItem.button, %c(TXTDockItemButton));
 
@@ -334,35 +398,7 @@ static void activeStyleNotificationCallback(CFNotificationCenterRef center, void
     [selectionWindow hideWithDelay:0.15];
 }
 
-__attribute__((always_inline)) bool check_crack() {
-    return [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.d11z.textyle.list"];
-}
-
-%ctor {
-    NSString *const identifier = [NSBundle mainBundle].bundleIdentifier;
-    NSArray *const args = [[NSProcessInfo processInfo] arguments];
-    BOOL const isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
-    BOOL shouldLoad = NO;
-
-    if (args.count != 0) {
-        NSString *executablePath = args[0];
-        if (executablePath) {
-            BOOL isApplication = [executablePath rangeOfString:@"/Application"].location != NSNotFound;
-            shouldLoad = isSpringBoard || isApplication;
-        }
-    }
-
-    if ([SparkAppList doesIdentifier:@"com.d11z.textyle" andKey:@"Blacklist" containBundleIdentifier:identifier]) {
-        shouldLoad = NO;
-    }
-
-    if (!shouldLoad || !check_crack()) return;
-
-    styleManager = [TXTStyleManager sharedManager];
-    if (isSpringBoard) [styleManager initForSpringBoard];
-
-    loadPrefs();
-
+static void addObservers() {
     CFNotificationCenterAddObserver(
         CFNotificationCenterGetDarwinNotifyCenter(),
         NULL,
@@ -389,6 +425,33 @@ __attribute__((always_inline)) bool check_crack() {
         NULL,
         CFNotificationSuspensionBehaviorCoalesce
     );
+}
+
+%ctor {
+    NSString *const identifier = [NSBundle mainBundle].bundleIdentifier;
+    NSArray *const args = [[NSProcessInfo processInfo] arguments];
+    BOOL const isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
+    BOOL shouldLoad = NO;
+
+    if (args.count != 0) {
+        NSString *executablePath = args[0];
+        if (executablePath) {
+            BOOL isApplication = [executablePath rangeOfString:@"/Application"].location != NSNotFound;
+            shouldLoad = isSpringBoard || isApplication;
+        }
+    }
+
+    if ([SparkAppList doesIdentifier:@"com.d11z.textyle" andKey:@"Blacklist" containBundleIdentifier:identifier]) {
+        shouldLoad = NO;
+    }
+
+    if (!shouldLoad || !check_crack()) return;
+
+    styleManager = [TXTStyleManager sharedManager];
+    if (isSpringBoard) [styleManager initForSpringBoard];
+
+    loadPrefs();
+    addObservers();
 
     menuOpen = NO;
     active = NO;
